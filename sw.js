@@ -1,5 +1,5 @@
 /* GermanBoost service worker — offline caching */
-const CACHE = "germanboost-v1";
+const CACHE = "germanboost-v2";
 const ASSETS = [
   "./",
   "./index.html",
