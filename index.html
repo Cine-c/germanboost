@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GermanBoost · Learn German</title>
+  <meta name="description" content="A complete, free German learning site: alphabet, pronunciation, vocabulary, grammar, phrases, flashcards, quizzes and a verb conjugator." />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇩🇪</text></svg>" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="theme-color" content="#d21f2b" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="GermanBoost" />
+</head>
+<body>
+  <header class="topbar">
+    <button id="menuToggle" class="menu-toggle" aria-label="Toggle menu">☰</button>
+    <a href="#/home" class="brand">
+      <span class="flag" aria-hidden="true"></span>
+      <span>German<strong>Boost</strong></span>
+    </a>
+    <div class="topbar-right">
+      <div class="search-wrap">
+        <input id="globalSearch" type="search" placeholder="Search words…" autocomplete="off" />
+        <div id="searchResults" class="search-results" hidden></div>
+      </div>
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle dark mode" title="Toggle theme">🌙</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav id="sidebar" class="sidebar">
+      <a href="#/home" data-route="home"><span class="ic">🏠</span> Home</a>
+      <a href="#/today" data-route="today"><span class="ic">🗓️</span> Today's Plan</a>
+      <a href="#/levels" data-route="levels"><span class="ic">🎯</span> Levels (A1–C2)</a>
+      <div class="nav-group">Foundations</div>
+      <a href="#/alphabet" data-route="alphabet"><span class="ic">🔤</span> Alphabet</a>
+      <a href="#/pronunciation" data-route="pronunciation"><span class="ic">🗣️</span> Pronunciation</a>
+      <a href="#/numbers" data-route="numbers"><span class="ic">🔢</span> Numbers</a>
+      <div class="nav-group">Build Your Words</div>
+      <a href="#/vocab" data-route="vocab"><span class="ic">📚</span> Vocabulary</a>
+      <a href="#/phrases" data-route="phrases"><span class="ic">💬</span> Phrases</a>
+      <div class="nav-group">Grammar</div>
+      <a href="#/grammar" data-route="grammar"><span class="ic">📐</span> Grammar Lessons</a>
+      <a href="#/conjugator" data-route="conjugator"><span class="ic">⚙️</span> Verb Conjugator</a>
+      <div class="nav-group">Practice</div>
+      <a href="#/review" data-route="review"><span class="ic">🔁</span> Review (SRS)</a>
+      <a href="#/flashcards" data-route="flashcards"><span class="ic">🃏</span> Flashcards</a>
+      <a href="#/drills" data-route="drills"><span class="ic">✏️</span> Grammar Drills</a>
+      <a href="#/listening" data-route="listening"><span class="ic">🎧</span> Listening</a>
+      <a href="#/dialogues" data-route="dialogues"><span class="ic">🗨️</span> Dialogues</a>
+      <a href="#/writing" data-route="writing"><span class="ic">📝</span> Writing</a>
+      <a href="#/speaking" data-route="speaking"><span class="ic">🎤</span> Speaking</a>
+      <a href="#/quiz" data-route="quiz"><span class="ic">✅</span> Quiz</a>
+      <div class="nav-group">You</div>
+      <a href="#/progress" data-route="progress"><span class="ic">📈</span> Progress</a>
+    </nav>
+    <div id="backdrop" class="backdrop" hidden></div>
+
+    <main id="view" class="view"><!-- rendered by app.js --></main>
+  </div>
+
+  <footer class="footer">
+    <span>Built for learning German · works fully offline · pronunciation via your browser</span>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker.register("sw.js").catch(function () {});
+      });
+    }
+  </script>
+</body>
+</html>
