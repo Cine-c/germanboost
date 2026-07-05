@@ -57,6 +57,23 @@
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
 
+    // Google Consent Mode v2 — default everything to "denied" until the visitor
+    // chooses (required for GA4 + AdSense under UK/EU GDPR). Remembers prior choice.
+    (function () {
+      var choice = null;
+      try { choice = localStorage.getItem('dl_consent'); } catch (e) {}
+      var g = choice === 'granted' ? 'granted' : 'denied';
+      gtag('consent', 'default', {
+        ad_storage: g,
+        ad_user_data: g,
+        ad_personalization: g,
+        analytics_storage: g,
+        functionality_storage: 'granted',
+        security_storage: 'granted',
+        wait_for_update: 500
+      });
+    })();
+
     gtag('config', 'G-RCS1K1WJW6');
   </script>
 
@@ -134,7 +151,23 @@
 
   <footer class="footer">
     <span>Built for learning German · works fully offline · pronunciation via your browser</span>
+    <button type="button" id="cookieSettings" class="link-btn">Cookie settings</button>
   </footer>
+
+  <div id="consentBanner" class="consent" role="dialog" aria-label="Cookie consent" aria-live="polite" hidden>
+    <div class="consent-inner">
+      <div class="consent-text">
+        <strong>We value your privacy</strong>
+        <p>We use cookies to measure traffic (Google Analytics) and to show ads (Google AdSense).
+        Essential cookies always stay on; you can accept or reject the rest. Change this any time via
+        “Cookie settings” in the footer.</p>
+      </div>
+      <div class="consent-actions">
+        <button type="button" id="consentReject" class="btn-consent ghost">Reject all</button>
+        <button type="button" id="consentAccept" class="btn-consent primary">Accept all</button>
+      </div>
+    </div>
+  </div>
 
   <script src="js/data.js"></script>
   <script src="js/course.js"></script>
@@ -145,6 +178,31 @@
         navigator.serviceWorker.register("sw.js").catch(function () {});
       });
     }
+  </script>
+  <script>
+    // Cookie consent banner, wired to Google Consent Mode v2.
+    (function () {
+      var KEY = "dl_consent";
+      var banner = document.getElementById("consentBanner");
+      function stored() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+      function save(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+      function apply(granted) {
+        if (typeof gtag !== "function") return;
+        gtag("consent", "update", {
+          ad_storage: granted ? "granted" : "denied",
+          ad_user_data: granted ? "granted" : "denied",
+          ad_personalization: granted ? "granted" : "denied",
+          analytics_storage: granted ? "granted" : "denied"
+        });
+      }
+      function choose(granted) { save(granted ? "granted" : "denied"); apply(granted); banner.hidden = true; }
+      document.getElementById("consentAccept").addEventListener("click", function () { choose(true); });
+      document.getElementById("consentReject").addEventListener("click", function () { choose(false); });
+      document.getElementById("cookieSettings").addEventListener("click", function () { banner.hidden = false; });
+      var prior = stored();
+      if (!prior) banner.hidden = false;      // first visit → ask
+      else apply(prior === "granted");        // re-affirm saved choice this session
+    })();
   </script>
   <script>
     // GA4 SPA route tracking. The initial pageview is sent by gtag('config', …);
