@@ -1,10 +1,11 @@
 /* GermanBoost service worker — offline caching */
-const CACHE = "germanboost-v2";
+const CACHE = "germanboost-v3";
 const ASSETS = [
   "./",
   "./index.html",
   "./css/styles.css",
   "./js/data.js",
+  "./js/course.js",
   "./js/app.js",
   "./manifest.json",
   "./icons/icon-192.png",

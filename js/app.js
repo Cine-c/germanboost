@@ -90,6 +90,10 @@
     },
     getPlan(date) { this.data.plan = this.data.plan || {}; return this.data.plan[date] || (this.data.plan[date] = {}); },
     togglePlan(date, id) { const p = this.getPlan(date); if (p[id]) delete p[id]; else p[id] = true; this.save(); },
+    courseSet() { return this.data.courseDone || (this.data.courseDone = {}); },
+    isUnitDone(id) { return !!this.courseSet()[id]; },
+    completeUnit(id) { this.courseSet()[id] = true; this.save(); },
+    courseDoneCount() { return Object.keys(this.courseSet()).length; },
     currentStreak() {
       const days = new Set(this.data.streakDays);
       let streak = 0;
@@ -264,7 +268,7 @@
         <div class="hero">
           <h1>Willkommen! 👋</h1>
           <p>Learn German from scratch — the alphabet, real vocabulary, grammar that finally makes sense, and practice that sticks. Everything in one place, free, and it works offline.</p>
-          <a class="btn" href="#/alphabet">Start with the Alphabet →</a>
+          <a class="btn" href="#/course">🎓 Start the Course →</a>
         </div>
 
         <div class="stat-row">
@@ -294,6 +298,7 @@
 
         <h2 style="margin:28px 0 12px">Explore</h2>
         <div class="grid cols-3">
+          ${tile("🎓", "Course", "Guided step-by-step units that teach you German.", "#/course")}
           ${tile("🗓️", "Today's Plan", "A balanced daily mix across every skill.", "#/today")}
           ${tile("🎯", "Levels (A1–C2)", "The full CEFR roadmap from beginner to mastery.", "#/levels")}
           ${tile("🔤", "Alphabet", "All 26 letters + ä ö ü ß, with sound.", "#/alphabet")}
@@ -392,6 +397,39 @@
           </div>
         </div>
         <div class="card" style="margin-top:16px;padding:6px 14px">${rows}</div>
+      `;
+    },
+
+    /* ---------- Structured Course ---------- */
+    course() {
+      const level = State.courseLevel || (DATA.course[0] && DATA.course[0].level) || "A1";
+      const levels = Array.from(new Set(DATA.course.map((u) => u.level)));
+      const units = DATA.course.filter((u) => u.level === level);
+      const done = units.filter((u) => Progress.isUnitDone(u.id)).length;
+      const chips = levels
+        .map((l) => `<button class="chip ${l === level ? "active" : ""}" data-clevel="${l}">${l}</button>`)
+        .join("");
+      const cards = units
+        .map((u) => {
+          const complete = Progress.isUnitDone(u.id);
+          return `
+          <button class="tile course-card ${complete ? "done" : ""}" data-unit="${u.id}">
+            <div class="course-num">${complete ? "✓" : u.num}</div>
+            <div class="grow">
+              <h3 style="margin:0 0 3px">Unit ${u.num}: ${u.title}</h3>
+              <p style="margin:0">${u.goal}</p>
+            </div>
+          </button>`;
+        })
+        .join("");
+      return `
+        ${head("Course", "A guided, step-by-step path. Each unit teaches a topic — vocabulary, grammar, examples — then you practise and take a mini-quiz. Complete them in order.")}
+        <div class="chips chips-levels">${chips}</div>
+        <div class="card course-progress">
+          <div class="quiz-bar"><span style="width:${units.length ? (done / units.length) * 100 : 0}%"></span></div>
+          <p style="margin:8px 0 0;color:var(--muted)">${level} course — <strong>${done}/${units.length}</strong> units complete</p>
+        </div>
+        <div id="courseArea"><div class="grid" style="gap:12px">${cards || `<p style="color:var(--muted)">No units at this level yet — coming soon.</p>`}</div></div>
       `;
     },
 
@@ -906,6 +944,117 @@
           render("today");
         })
       );
+    },
+
+    course() {
+      const area = document.getElementById("courseArea");
+      view.querySelectorAll("[data-clevel]").forEach((b) =>
+        b.addEventListener("click", () => { State.courseLevel = b.getAttribute("data-clevel"); render("course"); })
+      );
+      view.querySelectorAll("[data-unit]").forEach((b) =>
+        b.addEventListener("click", () => openUnit(b.getAttribute("data-unit")))
+      );
+
+      function sectionHTML(s) {
+        if (s.type === "intro") return `<div class="lesson-sec lesson-intro">${s.text}</div>`;
+        if (s.type === "grammar") return `<div class="lesson-sec"><h3>📐 ${s.title || "Grammar"}</h3><div class="lesson-body">${s.text}</div></div>`;
+        if (s.type === "vocab") {
+          const rows = s.items.map(([de, en, info]) =>
+            `<div class="word-row">${spk(de)}<span class="de">${de}</span><span class="grow en">— ${en}</span>${articleBadge(info)}</div>`).join("");
+          return `<div class="lesson-sec"><h3>📚 ${s.title || "Vocabulary"}</h3><div class="card" style="padding:4px 12px">${rows}</div></div>`;
+        }
+        if (s.type === "examples") {
+          const rows = s.items.map(([de, en]) =>
+            `<div class="word-row">${spk(de)}<div class="grow"><div class="de">${de}</div><div class="en">${en}</div></div></div>`).join("");
+          return `<div class="lesson-sec"><h3>💬 Examples</h3><div class="card" style="padding:4px 12px">${rows}</div></div>`;
+        }
+        if (s.type === "practice") {
+          const items = s.items.map((it, i) => `
+            <div class="drill-item">
+              <div class="drill-q">${i + 1}. ${it.q.replace(/_{2,}/g, '<span class="drill-blank">_____</span>')}</div>
+              <div class="drill-row">
+                <input class="drill-input" data-answer="${escapeAttr(it.answer)}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="answer" />
+                <span class="drill-fb"></span>
+              </div>
+              ${it.hint ? `<span class="drill-hint">💡 ${it.hint}</span>` : ""}
+              ${it.en ? `<div class="drill-en">${it.en}</div>` : ""}
+            </div>`).join("");
+          return `<div class="lesson-sec practice-block"><h3>✏️ Practice</h3><p style="color:var(--muted);margin-top:0">${s.instructions || ""}</p>${items}
+            <div class="drill-actions"><button class="btn practice-check">Check answers</button><span class="drill-score"></span></div></div>`;
+        }
+        if (s.type === "quiz") {
+          const qs = s.items.map((q, qi) => `
+            <div class="dia-q" data-answer="${escapeAttr(q.answer)}">
+              <div class="quiz-q" style="font-size:1.02rem">${qi + 1}. ${q.q}</div>
+              <div class="quiz-options">${q.options.map((o) => `<button class="quiz-opt" data-opt="${escapeAttr(o)}">${o}</button>`).join("")}</div>
+            </div>`).join("");
+          return `<div class="lesson-sec"><h3>✅ Mini-quiz</h3>${qs}</div>`;
+        }
+        return "";
+      }
+
+      function openUnit(id) {
+        const u = DATA.course.find((x) => x.id === id);
+        if (!u) return;
+        const idx = DATA.course.indexOf(u);
+        const next = DATA.course[idx + 1] && DATA.course[idx + 1].level === u.level ? DATA.course[idx + 1] : null;
+        area.innerHTML = `
+          <button class="btn ghost small" id="courseBack">← All units</button>
+          <div class="lesson-head">
+            <span class="lv-chip" style="background:${levelColor(u.level)};margin:0">${u.level}</span>
+            <h2 style="margin:6px 0 2px">Unit ${u.num}: ${u.title}</h2>
+            <p style="margin:0;color:var(--muted)">🎯 ${u.goal}</p>
+          </div>
+          ${u.sections.map(sectionHTML).join("")}
+          <div class="card" style="text-align:center;margin-top:16px">
+            <button class="btn" id="unitDone">${Progress.isUnitDone(u.id) ? "✓ Completed — mark again" : "✓ Mark unit complete"}</button>
+            ${next ? `<button class="btn ghost" id="unitNext" style="margin-left:8px">Next: Unit ${next.num} →</button>` : ""}
+          </div>`;
+        window.scrollTo(0, 0);
+        document.getElementById("courseBack").onclick = () => render("course");
+
+        // practice checking
+        area.querySelectorAll(".practice-block").forEach((block) => {
+          const btn = block.querySelector(".practice-check");
+          btn.onclick = () => {
+            let correct = 0, total = 0;
+            block.querySelectorAll(".drill-input").forEach((inp) => {
+              total++;
+              const ans = inp.getAttribute("data-answer");
+              const ok = ans.split("|").map(normDE).includes(normDE(inp.value));
+              inp.classList.remove("ok", "bad");
+              const fb = inp.parentElement.querySelector(".drill-fb");
+              if (!inp.value.trim()) { fb.textContent = ""; fb.className = "drill-fb"; return; }
+              if (ok) { correct++; inp.classList.add("ok"); fb.textContent = "✓"; fb.className = "drill-fb ok"; }
+              else { inp.classList.add("bad"); fb.innerHTML = `✗ → <strong>${ans.split("|")[0]}</strong>`; fb.className = "drill-fb bad"; }
+            });
+            block.querySelector(".drill-score").textContent = `${correct} / ${total} correct`;
+          };
+        });
+
+        // quiz
+        area.querySelectorAll(".dia-q").forEach((qEl) => {
+          const answer = qEl.getAttribute("data-answer");
+          qEl.querySelectorAll(".quiz-opt").forEach((b) =>
+            (b.onclick = () => {
+              if (qEl.dataset.done) return;
+              qEl.dataset.done = "1";
+              const chosen = b.getAttribute("data-opt");
+              qEl.querySelectorAll(".quiz-opt").forEach((x) => {
+                x.disabled = true;
+                if (x.getAttribute("data-opt") === answer) x.classList.add("correct");
+                if (x.getAttribute("data-opt") === chosen && chosen !== answer) x.classList.add("wrong");
+              });
+            })
+          );
+        });
+
+        document.getElementById("unitDone").onclick = () => {
+          Progress.completeUnit(u.id);
+          if (next) openUnit(next.id); else render("course");
+        };
+        if (next) document.getElementById("unitNext").onclick = () => openUnit(next.id);
+      }
     },
 
     conjugator() {
@@ -1674,7 +1823,7 @@
       if (btn)
         btn.addEventListener("click", () => {
           if (confirm("Reset all learning progress? This cannot be undone.")) {
-            Progress.data = { learned: {}, quizzes: 0, quizBest: 0, flashSeen: 0, streakDays: [], drills: { done: 0, best: 0 }, plan: {}, srs: {}, srsNew: {}, srsReviews: {}, srsSettings: { category: "All", direction: "both", level: "All" } };
+            Progress.data = { learned: {}, quizzes: 0, quizBest: 0, flashSeen: 0, streakDays: [], drills: { done: 0, best: 0 }, plan: {}, courseDone: {}, srs: {}, srsNew: {}, srsReviews: {}, srsSettings: { category: "All", direction: "both", level: "All" } };
             Progress.save();
             Progress.touchDay();
             render("progress");
@@ -1741,7 +1890,7 @@
      Router
      ============================================================ */
   const routes = {
-    home: Views.home, today: Views.today, levels: Views.levels, alphabet: Views.alphabet, pronunciation: Views.pronunciation,
+    home: Views.home, course: Views.course, today: Views.today, levels: Views.levels, alphabet: Views.alphabet, pronunciation: Views.pronunciation,
     numbers: Views.numbers, vocab: Views.vocab, phrases: Views.phrases,
     grammar: Views.grammar, conjugator: Views.conjugator, flashcards: Views.flashcards,
     review: Views.review, drills: Views.drills, listening: Views.listening,
