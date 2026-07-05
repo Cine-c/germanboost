@@ -1,0 +1,279 @@
+<style>
+  :root{
+    --ink:#100d12;        /* warm near-black ground */
+    --ink2:#1b161d;
+    --red:#E11D2A;        /* German red */
+    --red-deep:#a3121c;
+    --gold:#F5C33B;       /* German gold */
+    --paper:#F7F3EC;      /* warm off-white */
+    --muted:#8B8591;
+    --stage-w:1920px;
+    --stage-h:1080px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#000;overflow:hidden}
+  .viewport{position:fixed;inset:0;background:#000;overflow:hidden}
+
+  .frame{
+    position:absolute;
+    top:50%;left:50%;
+    width:var(--stage-w);height:var(--stage-h);
+    transform:translate(-50%,-50%) scale(var(--s,1));
+    transform-origin:center center;
+    background:
+      radial-gradient(120% 90% at 78% 18%, rgba(225,29,42,.20), transparent 55%),
+      radial-gradient(90% 80% at 12% 92%, rgba(245,195,59,.10), transparent 60%),
+      linear-gradient(160deg,#161119 0%, var(--ink) 55%, #0b090d 100%);
+    color:var(--paper);
+    overflow:hidden;
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    box-shadow:0 40px 120px rgba(0,0,0,.6);
+  }
+  /* film grain / vignette */
+  .frame::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(130% 130% at 50% 50%, transparent 58%, rgba(0,0,0,.55) 100%);
+    mix-blend-mode:multiply;
+  }
+
+  .disp{font-family:"Bahnschrift","DIN Alternate","Arial Narrow",sans-serif;font-weight:600;
+    letter-spacing:.01em;line-height:.95;text-wrap:balance}
+  .kicker{font-family:"Bahnschrift","DIN Alternate","Arial Narrow",sans-serif;
+    text-transform:uppercase;letter-spacing:.42em;font-weight:600;color:var(--gold);font-size:26px}
+
+  .scene{position:absolute;inset:0;display:grid;place-content:center;text-align:center;
+    padding:0 160px;will-change:transform,opacity}
+
+  /* one shared keyframe, reused with per-scene duration+delay so the whole film
+     lives on a single seekable timeline */
+  @keyframes sceneLife{
+    0%   {opacity:0;transform:translateY(34px) scale(.985)}
+    12%  {opacity:1;transform:translateY(0) scale(1)}
+    86%  {opacity:1;transform:translateY(0) scale(1)}
+    100% {opacity:0;transform:translateY(-26px) scale(1.01)}
+  }
+  @keyframes pop{
+    0%{opacity:0;transform:translateY(18px) scale(.9)}
+    45%{opacity:1;transform:translateY(0) scale(1.04)}
+    70%{transform:scale(1)}
+    100%{opacity:1;transform:none}
+  }
+  @keyframes rise{0%{opacity:0;transform:translateY(40px)}18%,100%{opacity:1;transform:none}}
+  @keyframes glowPulse{0%,100%{filter:drop-shadow(0 0 0 rgba(245,195,59,0))}50%{filter:drop-shadow(0 0 26px rgba(245,195,59,.5))}}
+  @keyframes flagWipe{0%{clip-path:inset(0 100% 0 0)}22%,100%{clip-path:inset(0 0 0 0)}}
+  @keyframes barGrow{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- Scene 1: cold open ---------- */
+  #s1{animation:sceneLife 4s linear 0s both}
+  .flagbar{display:flex;flex-direction:column;width:150px;height:150px;border-radius:14px;overflow:hidden;
+    margin:0 auto 40px;box-shadow:0 24px 60px rgba(0,0,0,.5);animation:flagWipe 4s cubic-bezier(.7,0,.2,1) 0s both}
+  .flagbar span{flex:1}
+  .flagbar .k{background:#111}.flagbar .r{background:var(--red)}.flagbar .g{background:var(--gold)}
+  .brand{font-size:132px}
+  .brand b{color:var(--red)}
+  .brand .boost{color:var(--gold)}
+  #s1 .sub{margin-top:26px;font-size:40px;color:var(--paper);opacity:.9;font-family:"Bahnschrift",sans-serif;letter-spacing:.06em}
+  #s1 .sub em{color:var(--gold);font-style:normal}
+
+  /* ---------- Scene 2: CEFR ladder ---------- */
+  #s2{animation:sceneLife 4s linear 4s both}
+  .ladder{display:flex;gap:22px;justify-content:center;margin-top:46px;align-items:flex-end;height:340px}
+  .rung{width:150px;border-radius:16px 16px 6px 6px;background:linear-gradient(180deg,var(--ink2),#0c0a0e);
+    border:1px solid rgba(247,243,236,.10);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+    padding-bottom:22px;position:relative;transform-origin:bottom;overflow:hidden}
+  .rung .lvl{font-family:"Bahnschrift",sans-serif;font-weight:600;font-size:56px}
+  .rung .tag{font-size:19px;color:var(--muted);margin-top:6px;letter-spacing:.04em}
+  .rung::before{content:"";position:absolute;left:0;right:0;top:0;height:8px;background:var(--red);opacity:.85}
+  .rung .fill{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(225,29,42,.28),rgba(245,195,59,.16));transform-origin:bottom}
+
+  /* ---------- Scene 3: content counters ---------- */
+  #s3{animation:sceneLife 5s linear 8s both}
+  .stats{display:flex;gap:64px;justify-content:center;margin-top:40px}
+  .stat .num{font-family:"Bahnschrift",sans-serif;font-weight:700;font-size:150px;line-height:1;color:var(--paper);
+    font-variant-numeric:tabular-nums}
+  .stat .num.gold{color:var(--gold)} .stat .num.red{color:var(--red)}
+  .stat .lab{font-size:26px;color:var(--muted);margin-top:12px;letter-spacing:.08em;text-transform:uppercase;
+    font-family:"Bahnschrift",sans-serif}
+
+  /* ---------- Scene 4: practice chips ---------- */
+  #s4{animation:sceneLife 6s linear 13s both}
+  .chips{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;max-width:1240px;margin:46px auto 0}
+  .chip{font-family:"Bahnschrift",sans-serif;font-size:44px;font-weight:600;padding:22px 42px;border-radius:999px;
+    border:1.5px solid rgba(247,243,236,.16);background:rgba(247,243,236,.04);display:flex;align-items:center;gap:18px}
+  .chip .d{width:16px;height:16px;border-radius:50%;background:var(--red)}
+  .chip:nth-child(3n) .d{background:var(--gold)}
+  .chip:nth-child(3n+2) .d{background:var(--paper)}
+
+  /* ---------- Scene 5: offline / PWA ---------- */
+  #s5{animation:sceneLife 4s linear 19s both}
+  .tri{display:flex;gap:64px;justify-content:center;margin-top:30px}
+  .tri .item{display:flex;flex-direction:column;align-items:center;gap:18px}
+  .tri .glyph{font-size:110px;line-height:1;filter:drop-shadow(0 12px 30px rgba(0,0,0,.5))}
+  .tri .t{font-family:"Bahnschrift",sans-serif;font-size:46px;font-weight:600}
+  .tri .s{font-size:24px;color:var(--muted)}
+
+  /* ---------- Scene 6: QR CTA ---------- */
+  #s6{animation:sceneLife 7s linear 23s both;grid-template-columns:1fr auto;gap:110px;align-items:center;text-align:left;
+    padding:0 200px}
+  #s6 .copy{max-width:640px}
+  #s6 .big{font-size:118px}
+  #s6 .big u{text-decoration:none;color:var(--gold)}
+  #s6 .lead{font-size:34px;color:var(--paper);opacity:.86;margin-top:22px;line-height:1.35;font-family:"Bahnschrift",sans-serif;letter-spacing:.02em}
+  #s6 .url{margin-top:30px;display:inline-flex;align-items:center;gap:16px;font-family:"Bahnschrift",sans-serif;
+    font-size:40px;letter-spacing:.04em}
+  #s6 .url .dot{width:14px;height:14px;border-radius:50%;background:var(--gold);box-shadow:0 0 18px var(--gold)}
+  .qrcard{background:var(--paper);border-radius:28px;padding:40px;box-shadow:0 40px 90px rgba(0,0,0,.55);
+    position:relative;animation:pop 1s cubic-bezier(.2,.9,.2,1) 23.3s both}
+  .qrcard svg{display:block;width:420px;height:420px}
+  .qrcard .scanline{position:absolute;left:40px;right:40px;height:6px;border-radius:6px;top:40px;
+    background:linear-gradient(90deg,transparent,var(--red),transparent);
+    box-shadow:0 0 22px var(--red);animation:scan 2.4s ease-in-out 24s infinite}
+  @keyframes scan{0%,100%{top:44px}50%{top:calc(100% - 50px)}}
+  .qrcard .logo{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:96px;height:96px;border-radius:16px;background:var(--ink);display:grid;place-items:center;
+    box-shadow:0 0 0 10px var(--paper)}
+  .qrcard .logo span{font-family:"Bahnschrift",sans-serif;font-weight:700;color:var(--gold);font-size:44px}
+  #s6 .cap{margin-top:22px;font-size:22px;color:var(--muted);font-family:"Bahnschrift",sans-serif;letter-spacing:.06em}
+
+  /* persistent bottom flag rule + wordmark on every scene */
+  .footrule{position:absolute;left:0;right:0;bottom:0;height:10px;display:flex;z-index:5}
+  .footrule span{flex:1}.footrule .k{background:#111}.footrule .r{background:var(--red)}.footrule .g{background:var(--gold)}
+  .watermark{position:absolute;bottom:40px;left:80px;font-family:"Bahnschrift",sans-serif;font-weight:600;
+    font-size:30px;letter-spacing:.02em;color:var(--paper);opacity:.75;z-index:5}
+  .watermark b{color:var(--red)} .watermark i{color:var(--gold);font-style:normal}
+
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important}}
+</style>
+
+<div class="viewport">
+  <div class="frame" id="frame">
+
+    <!-- Scene 1 -->
+    <section class="scene" id="s1">
+      <div class="flagbar"><span class="k"></span><span class="r"></span><span class="g"></span></div>
+      <div class="disp brand">German<b>Boost</b></div>
+      <div class="sub">Learn German &mdash; <em>A1 &rarr; C2</em></div>
+    </section>
+
+    <!-- Scene 2 -->
+    <section class="scene" id="s2">
+      <div class="kicker">Start anywhere on the ladder</div>
+      <div class="ladder" id="ladder"></div>
+    </section>
+
+    <!-- Scene 3 -->
+    <section class="scene" id="s3">
+      <div class="kicker">A whole course, in your pocket</div>
+      <div class="stats">
+        <div class="stat"><div class="num red" data-count="250" data-suffix="+">0</div><div class="lab">Vocabulary words</div></div>
+        <div class="stat"><div class="num gold" data-count="23">0</div><div class="lab">Grammar lessons</div></div>
+        <div class="stat"><div class="num" data-count="18">0</div><div class="lab">Vocab sets</div></div>
+      </div>
+    </section>
+
+    <!-- Scene 4 -->
+    <section class="scene" id="s4">
+      <div class="kicker">Then practice, every way</div>
+      <div class="chips" id="chips"></div>
+    </section>
+
+    <!-- Scene 5 -->
+    <section class="scene" id="s5">
+      <div class="kicker">No account. No catch.</div>
+      <div class="tri">
+        <div class="item"><div class="glyph">&#128244;</div><div class="t">Works offline</div><div class="s">Every lesson, anywhere</div></div>
+        <div class="item"><div class="glyph">&#128242;</div><div class="t">Installs like an app</div><div class="s">Add to home screen</div></div>
+        <div class="item"><div class="glyph">&#10024;</div><div class="t">Free forever</div><div class="s">Just open &amp; learn</div></div>
+      </div>
+    </section>
+
+    <!-- Scene 6 -->
+    <section class="scene" id="s6">
+      <div class="copy">
+        <div class="kicker" style="margin-bottom:22px">Start today</div>
+        <div class="disp big">Scan &amp; <u>start</u><br>learning German.</div>
+        <div class="lead">Point your camera at the code &mdash; you'll be on your first lesson in seconds.</div>
+        <div class="url"><span class="dot"></span>germanboost.xyz</div>
+      </div>
+      <div class="qrcard">
+        <div class="scanline"></div>
+        <!-- QR: https://www.germanboost.xyz (segno, EC=H) -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 370 370"><path transform="scale(10)" stroke="#111" d="M2 2.5h7m2 0h1m1 0h1m1 0h1m2 0h1m2 0h4m1 0h1m1 0h7m-33 1h1m5 0h1m3 0h2m2 0h3m1 0h1m1 0h2m2 0h1m1 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m1 0h5m1 0h2m2 0h2m1 0h4m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h2m4 0h2m1 0h1m3 0h1m1 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h3m1 0h4m2 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m3 0h5m2 0h1m1 0h3m1 0h1m2 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-20 1h1m1 0h3m6 0h1m-22 1h2m1 0h2m7 0h1m1 0h1m1 0h2m3 0h1m4 0h2m-30 1h1m1 0h1m1 0h1m2 0h1m1 0h1m3 0h2m1 0h1m1 0h3m1 0h3m1 0h3m1 0h1m-32 1h1m2 0h2m1 0h1m1 0h1m1 0h1m1 0h1m1 0h4m2 0h1m1 0h4m1 0h1m1 0h1m1 0h2m-33 1h1m1 0h2m1 0h1m6 0h1m1 0h5m2 0h3m2 0h3m1 0h3m-33 1h1m2 0h4m1 0h2m2 0h5m4 0h1m1 0h1m2 0h4m2 0h1m-33 1h2m3 0h1m1 0h1m1 0h1m1 0h4m3 0h4m1 0h1m1 0h1m1 0h2m2 0h1m-31 1h1m2 0h4m2 0h2m1 0h2m3 0h2m6 0h2m-28 1h1m1 0h2m3 0h3m7 0h2m6 0h1m1 0h1m2 0h2m-32 1h1m1 0h1m3 0h1m2 0h4m2 0h1m3 0h1m3 0h1m1 0h6m-31 1h2m2 0h2m1 0h1m1 0h2m1 0h3m1 0h3m1 0h3m1 0h6m1 0h2m-29 1h1m1 0h1m7 0h2m2 0h1m2 0h1m1 0h1m1 0h2m2 0h2m1 0h1m-30 1h3m2 0h2m2 0h2m2 0h1m1 0h3m1 0h3m1 0h5m1 0h1m-33 1h1m4 0h5m3 0h3m1 0h1m6 0h2m1 0h1m1 0h1m1 0h2m-33 1h1m2 0h1m4 0h1m3 0h2m1 0h1m1 0h6m2 0h2m1 0h3m-31 1h1m2 0h1m1 0h3m3 0h3m1 0h2m1 0h2m1 0h1m2 0h1m1 0h1m1 0h1m2 0h2m-33 1h1m2 0h2m2 0h4m2 0h1m1 0h1m1 0h2m1 0h1m1 0h1m4 0h2m1 0h2m-32 1h2m3 0h2m1 0h1m2 0h1m3 0h3m2 0h1m3 0h5m2 0h2m-25 1h1m2 0h1m1 0h2m2 0h3m2 0h3m3 0h1m1 0h1m-31 1h7m1 0h2m1 0h1m1 0h2m1 0h3m2 0h4m1 0h1m1 0h1m-29 1h1m5 0h1m2 0h1m1 0h1m2 0h1m3 0h1m1 0h1m2 0h2m3 0h4m-32 1h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h1m4 0h2m1 0h1m1 0h7m1 0h1m-32 1h1m1 0h3m1 0h1m1 0h3m3 0h1m1 0h4m1 0h1m3 0h1m1 0h1m1 0h3m-32 1h1m1 0h3m1 0h1m3 0h1m1 0h1m1 0h1m1 0h2m2 0h1m2 0h2m3 0h5m-33 1h1m5 0h1m2 0h1m2 0h8m2 0h1m3 0h1m3 0h3m-33 1h7m2 0h2m1 0h3m4 0h2m2 0h2m1 0h1m1 0h1m1 0h1"/></svg>
+        <div class="logo"><span>GB</span></div>
+      </div>
+    </section>
+
+    <div class="watermark">German<b>Boost</b> &middot; <i>germanboost.xyz</i></div>
+    <div class="footrule"><span class="k"></span><span class="r"></span><span class="g"></span></div>
+  </div>
+</div>
+
+<script>
+  // ---- build repeated DOM ----
+  const LEVELS=[["A1","Beginner",150],["A2","Elementary",190],["B1","Intermediate",235],
+                ["B2","Upper-int.",280],["C1","Advanced",320],["C2","Mastery",340]];
+  const ladder=document.getElementById("ladder");
+  LEVELS.forEach(([lvl,tag,h],i)=>{
+    const d=document.createElement("div");d.className="rung";
+    d.style.height=h+"px";
+    d.style.animation=`rise .9s cubic-bezier(.2,.8,.2,1) ${4 + i*0.18}s both`;
+    d.innerHTML=`<div class="fill" style="height:100%;animation:barGrow 1s cubic-bezier(.2,.8,.2,1) ${4.1+i*0.18}s both"></div>
+                 <div class="lvl">${lvl}</div><div class="tag">${tag}</div>`;
+    ladder.appendChild(d);
+  });
+
+  const MODES=["SRS Review","Flashcards","Grammar Drills","Listening","Dialogues","Writing","Speaking","Quiz"];
+  const chips=document.getElementById("chips");
+  MODES.forEach((m,i)=>{
+    const c=document.createElement("div");c.className="chip";
+    c.style.animation=`pop .8s cubic-bezier(.2,.9,.2,1) ${13.2 + i*0.16}s both`;
+    c.innerHTML=`<span class="d"></span>${m}`;
+    chips.appendChild(c);
+  });
+
+  // ---- deterministic clock: everything is CSS-timed on ONE 30s timeline ----
+  const DURATION=30000; // ms
+  const counters=[...document.querySelectorAll(".num[data-count]")];
+  function easeOut(x){return 1-Math.pow(1-x,3);}
+  function updateDynamic(ms){
+    // counters animate over their scene window 8.2s -> 12.2s
+    const p=Math.max(0,Math.min(1,(ms/1000-8.2)/3.6)), e=easeOut(p);
+    counters.forEach(el=>{
+      const target=+el.dataset.count, suf=el.dataset.suffix||"";
+      el.textContent=Math.round(target*e)+ (p>=1?suf:"");
+    });
+  }
+
+  const anims=()=>document.getAnimations();
+  function seekAll(ms){ anims().forEach(a=>{try{a.currentTime=ms;}catch(e){}}); updateDynamic(ms); }
+
+  const params=new URLSearchParams(location.search);
+  const CAPTURE=params.has("capture");
+
+  // wait a tick so all CSS animations are registered
+  requestAnimationFrame(()=>{
+    anims().forEach(a=>a.pause());          // we drive time ourselves
+    if(CAPTURE){
+      window.__ready=true;
+      window.seek=(ms)=>seekAll(Math.max(0,Math.min(DURATION-1,ms)));
+      seekAll(0);
+    }else{
+      const start=performance.now();
+      (function loop(now){
+        const t=(now-start)%DURATION;
+        seekAll(t);
+        requestAnimationFrame(loop);
+      })(start);
+    }
+  });
+
+  // ---- responsive letterbox scaling ----
+  function fit(){
+    const s=Math.min(innerWidth/1920, innerHeight/1080);
+    document.getElementById("frame").style.setProperty("--s",s);
+  }
+  addEventListener("resize",fit);
+  new ResizeObserver(fit).observe(document.documentElement);
+  fit();
+</script>
