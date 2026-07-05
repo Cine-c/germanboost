@@ -1,0 +1,13 @@
+.git
+.gitignore
+.dockerignore
+.assetsignore
+.claude
+node_modules
+.wrangler
+wrangler.jsonc
+wrangler.toml
+Dockerfile
+docker-compose.yml
+README.md
+_headers

@@ -1,0 +1,8 @@
+services:
+  germanboost:
+    build: .
+    image: germanboost:latest
+    container_name: germanboost
+    ports:
+      - "8080:80"
+    restart: unless-stopped
